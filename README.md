@@ -32,7 +32,7 @@ The entity-relationship diagram that represents the data model for this exercise
 
 Overview of the technical components. 
 
-![alt](https://github.com/davidmaceachern/consents-api/blob/c3fcec79c40f070cf30aa9bc83610792694e253f/diagrams/system-architecture.png)
+![alt](https://github.com/davidmaceachern/consents-api/blob/9bdae952f22b5d2216c25af480ec36669390b3ab/diagrams/system-architecture.png)
 
 
 
