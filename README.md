@@ -26,7 +26,7 @@
 
 The entity-relationship diagram that represents the data model for this exercise is:
 
-![alt](entity-relationship.png)
+![alt](https://github.com/davidmaceachern/consents-api/blob/04558feebdf899f827d3352e1d7e2b0994211340/diagrams/entity-relationship.png)
 
 ## System Architecture
 
