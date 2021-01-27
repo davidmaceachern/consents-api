@@ -20,7 +20,7 @@
 - Clone/download the repository.
 
 ## Goals
-- This project was developed to address the requirements defined in a Didomi challenge located [here](https://github.com/davidmaceachern/consents-api/blob/main/CHALLENGE.MD)
+- This project was developed to address the requirements defined in a Didomi challenge located [here](https://github.com/didomi/challenges/blob/master/backend/README.md)
 
 ## Data Model
 
