@@ -106,3 +106,6 @@ Delete dangling resources `docker system prune` or all containers/images/builds 
 - Refactor some of the code for increased readability, adding a data factory for generating entity record test data.
 - Add Logging, Telemetry, and Metrics using the standard that the organization has decided on.
 - Move the Data transformations into the respective `Dto`.
+
+// TODO Edgecase - if user updates their consent status directly would that emit an event we need to handle here?
+// TODO Edgecase - if user is not a valid user, we would need to use an authentication layer to avoid this being a problem?
