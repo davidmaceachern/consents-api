@@ -55,7 +55,7 @@ You can view Swagger documentation by visiting `http://localhost:3000/api` in yo
 ## Running E2E Tests
 
 1. Open a terminal window.
-2. Run an instance of the Postgres database locally using the script found [here](./consents-api/start-postgres-tmpfs.sh)
+2. Run an instance of the Postgres database locally using the script found [here](https://github.com/davidmaceachern/consents-api/blob/31a108e611d5e15c2579f41d0713f7b29b2eadb4/start-postgres-tmpfs.sh)
 3. Open another terminal window
 4. Change directory to the root of the Node.js project `cd ./consents/`.
 5. Run the e2e tests `npm run test:e2e` or `npm run test:e2eWatch` to have continuous feedback.
