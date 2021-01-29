@@ -1,23 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm'
 import { CreateEventDto } from './dto/create-event.dto';
 // import { UpdateEventDto } from './dto/update-event.dto';
 import { EventEntity } from './entities/event.entity';
+import { ConsentChangeEvent } from './consent-change.event';
 
 /**
  * Service class contains the business logic
  * of the domain, the rules that define what will
  * happen when the user interacts with the REST API.
  */
-// TODO Edgecase - if user updates their consent status directly would that emit an event we need to handle here?
-// TODO Edgecase - if user is not a valid user, we would need to use an authentication layer to avoid this being a problem?
+
 @Injectable()
 export class EventsService {
   constructor(
     @InjectRepository(EventEntity)
     private eventsRepository: Repository<EventEntity>,
-  ) {}
+    private eventEmitter: EventEmitter2
+  ) { }
 
   async create(dto: CreateEventDto): Promise<void> {
     // create a new event
@@ -25,7 +27,12 @@ export class EventsService {
     newEvent.changeDescription = this.getChangeDescription(dto.consents);
     newEvent.userID = dto.user.id;
     await this.eventsRepository.save(newEvent);
-    // TODO emit details about the created event.
+    
+    // emit an event for the User Entity to act upon
+    this.eventEmitter.emit(
+      'ConsentChangedEvent.created',
+      new ConsentChangeEvent(dto),
+    );
   }
 
   async findAll(): Promise<EventEntity[]> {
@@ -44,7 +51,7 @@ export class EventsService {
 
   private getChangeDescription(consents): string {
     // TODO This needs to be refactored.
-    type IConsentsToBeUpdated = { 
+    type IConsentsToBeUpdated = {
       emailNotificationsEnabled: boolean
       smsNotificationsEnabled: boolean
     };
@@ -68,26 +75,26 @@ export class EventsService {
 
     consents.map((consent: consent) => isConsentEnabled(consent))
 
-    if (consentsToBeUpdated.smsNotificationsEnabled === true && consentsToBeUpdated.emailNotificationsEnabled === true){
+    if (consentsToBeUpdated.smsNotificationsEnabled === true && consentsToBeUpdated.emailNotificationsEnabled === true) {
       changeDescription = "Enabled SMS and enabled Email";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === true && consentsToBeUpdated.emailNotificationsEnabled === true) {
-        changeDescription = "Enabled SMS and enabled Email"
+      changeDescription = "Enabled SMS and enabled Email"
     } else if (consentsToBeUpdated.smsNotificationsEnabled === false && consentsToBeUpdated.emailNotificationsEnabled === false) {
-        changeDescription = "Disabled SMS and disabled Email";
+      changeDescription = "Disabled SMS and disabled Email";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === true && consentsToBeUpdated.emailNotificationsEnabled === false) {
-        changeDescription = "Enabled SMS and disabled Email";
+      changeDescription = "Enabled SMS and disabled Email";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === false && consentsToBeUpdated.emailNotificationsEnabled === true) {
-        changeDescription = "Disabled SMS and enabled Email";
+      changeDescription = "Disabled SMS and enabled Email";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === true && consentsToBeUpdated.emailNotificationsEnabled === undefined) {
-        changeDescription = "Enabled SMS";
+      changeDescription = "Enabled SMS";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === false && consentsToBeUpdated.emailNotificationsEnabled === undefined) {
-        changeDescription = "Disabled SMS";
+      changeDescription = "Disabled SMS";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === undefined && consentsToBeUpdated.emailNotificationsEnabled === true) {
-        changeDescription = "Enabled Email";
+      changeDescription = "Enabled Email";
     } else if (consentsToBeUpdated.smsNotificationsEnabled === undefined && consentsToBeUpdated.emailNotificationsEnabled === false) {
-        changeDescription = "Disabled Email";
+      changeDescription = "Disabled Email";
     } else {
-        changeDescription = "Nothing has changed.";
+      changeDescription = "Nothing has changed.";
     }
     return changeDescription
   }

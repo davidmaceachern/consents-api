@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { OnEvent } from "@nestjs/event-emitter";
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,6 +7,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { isEmail } from 'class-validator';
 import { User } from './dto/user.interface';
+import { ConsentChangeEvent } from "../events/consent-change.event";
 
 /**
  * Service class contains the business logic
@@ -18,7 +20,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
-  ) {}
+  ) { }
 
   async findAll(): Promise<User[]> {
     const usersEntities: UserEntity[] = await this.usersRepository.find();
@@ -75,8 +77,8 @@ export class UsersService {
     }
 
     // check uniqueness of email
-    const userFound = await this.usersRepository.findOne({ where: { email: email }});
-    if (userFound.userID !== id) {    
+    const userFound = await this.usersRepository.findOne({ where: { email: email } });
+    if (userFound.userID !== id) {
       throw new UnprocessableEntityException("Email must be unique");
     }
 
@@ -95,9 +97,12 @@ export class UsersService {
     }
   }
 
-  // TODO Subscribe to new event change to update user status
-  // This could be moved outside to a new nestjs process with it's own repository
-  // instance
+  @OnEvent('ConsentChangedEvent.created')
+  handleConsentChangeEvent(event: ConsentChangeEvent) {
+    console.log('Handling the consent change event');
+    console.log(event)
+  }
+
   private getUsersConsents(user): any { // TODO replace ANY type with OR type
     const usersConsents = user.previouslyGivenConsent === false ? [] : [
       {
