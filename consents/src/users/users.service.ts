@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OnEvent } from "@nestjs/event-emitter";
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,7 +8,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { isEmail } from 'class-validator';
 import { User } from './dto/user.interface';
-import { ConsentChangeEvent } from "../events/consent-change.event";
+import { ConsentChangedEvent } from "../events/consent-changed.event";
+import { ConsentUserDeletedEvent } from "./consent-user-deleted.event";
 
 /**
  * Service class contains the business logic
@@ -20,6 +22,7 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private eventEmitter: EventEmitter2
   ) { }
 
   async findAll(): Promise<User[]> {
@@ -84,13 +87,18 @@ export class UsersService {
 
     // otherwise update the user
     await this.usersRepository.update(id, user);
-    const updatedUser = await this.usersRepository.findOne(id); // TODO Edgecase - check failure mode for this operation 
+    const updatedUser = await this.usersRepository.findOne(id);
     return this.buildUserResponseObject(updatedUser);
   }
 
   async delete(id: string): Promise<{ deleted: boolean; message?: string }> {
     try {
       await this.usersRepository.delete(id);
+      // emit an event for the Event Entity to act upon
+      this.eventEmitter.emit(
+        'ConsentUserDeletedEvent.created',
+        new ConsentUserDeletedEvent(id),
+      );
       return { deleted: true };
     } catch (err) {
       return { deleted: false, message: err.message };
@@ -98,12 +106,33 @@ export class UsersService {
   }
 
   @OnEvent('ConsentChangedEvent.created')
-  handleConsentChangeEvent(event: ConsentChangeEvent) {
-    console.log('Handling the consent change event');
-    console.log(event)
+  async handleConsentChangedEvent(event: ConsentChangedEvent) {
+    console.log('CONSENT CHANGED EVENT OCCURRED');
+    // find the user
+    const user: UserEntity = await this.usersRepository.findOne(event.userID);
+    type consent = { id: string, enabled: boolean };
+
+    if (!user) {
+      throw new Error(`Error: Problem consuming 'ConsentChangedEvent', UserID '${event.userID}' does not exist`);
+    }
+
+    // update the consents
+    function updateUserConsents(consent: consent, user: UserEntity): any {
+      user.previouslyGivenConsent = true;
+      if (consent.id === "email_notifications") {
+        user.emailNotificationsEnabled = consent.enabled;
+      } else if (consent.id === "sms_notifications") {
+        user.smsNotificationsEnabled = consent.enabled;
+      }
+    }
+
+    event.consents.map((consent: consent) => updateUserConsents(consent, user))
+
+    // commit the update to the table
+    await this.usersRepository.update(event.userID, user)
   }
 
-  private getUsersConsents(user): any { // TODO replace ANY type with OR type
+  private getUsersConsents(user): any {
     const usersConsents = user.previouslyGivenConsent === false ? [] : [
       {
         "id": "email_notifications",
@@ -113,7 +142,7 @@ export class UsersService {
         "id": "sms_notifications",
         "enabled": user.smsNotificationsEnabled
       }
-    ]
+    ];
     return usersConsents
   }
 

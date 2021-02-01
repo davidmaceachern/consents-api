@@ -13,7 +13,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
         example: '00000000-0000-0000-0000-000000000000',
         description: 'The unique ID the system provided when the user was created.',
     })
-    // @IsEmail() // TODO Fix decorator
+
     readonly id: string;
     
     @ApiProperty({

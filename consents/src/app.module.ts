@@ -48,7 +48,9 @@ if (process.env.ENVIRONMENT === "PRODUCTION") {
       retryDelay: 1000,
       // TODO Set "autoLoadEntities: true," though this won't work for the ChangeEntity https://docs.nestjs.com/techniques/database#auto-load-entities
     }),
-    EventEmitterModule.forRoot(),
+    EventEmitterModule.forRoot({
+      ignoreErrors: false
+    }),
     UsersModule, 
     EventsModule,
   ],

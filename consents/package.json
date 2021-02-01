@@ -1,6 +1,6 @@
 {
   "name": "consents",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Consent and user storage API.",
   "author": "David MacEachern <david.maceachern.tech@gmail.com>",
   "private": true,

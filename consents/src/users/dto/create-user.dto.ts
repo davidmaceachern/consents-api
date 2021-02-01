@@ -11,6 +11,5 @@ export class CreateUserDto {
         example: 'beauvoir@didomi.io',
         description: 'A valid email address that identifies the user.',
     })
-    // @IsEmail() // TODO Fix decorator
     readonly email: string;
 }

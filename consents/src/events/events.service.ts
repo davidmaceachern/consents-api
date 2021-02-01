@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { OnEvent } from "@nestjs/event-emitter";
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm'
 import { CreateEventDto } from './dto/create-event.dto';
-// import { UpdateEventDto } from './dto/update-event.dto';
 import { EventEntity } from './entities/event.entity';
-import { ConsentChangeEvent } from './consent-change.event';
+import { ConsentChangedEvent } from './consent-changed.event';
+import { ConsentUserDeletedEvent } from '../users/consent-user-deleted.event';
 
 /**
  * Service class contains the business logic
@@ -27,17 +28,16 @@ export class EventsService {
     newEvent.changeDescription = this.getChangeDescription(dto.consents);
     newEvent.userID = dto.user.id;
     await this.eventsRepository.save(newEvent);
-    
+
     // emit an event for the User Entity to act upon
     this.eventEmitter.emit(
       'ConsentChangedEvent.created',
-      new ConsentChangeEvent(dto),
+      new ConsentChangedEvent(dto),
     );
   }
 
   async findAll(): Promise<EventEntity[]> {
     return await this.eventsRepository.find();
-    // TODO Edgecase - might want let the user know when there are no events
   }
 
   async delete(id: string): Promise<{ deleted: boolean; message?: string }> {
@@ -49,12 +49,29 @@ export class EventsService {
     }
   }
 
+  @OnEvent('ConsentUserDeletedEvent.created')
+  async handleConsentUserDeletedEvent(event: ConsentUserDeletedEvent) {
+    console.log('CONSENT USER DELETED EVENT OCCURRED');
+    try {
+      // await this.eventsRepository.delete({ userID: event.id});
+      await this.eventsRepository.createQueryBuilder()
+        .delete()
+        .where("userID = :id", { id: event.id })
+        .execute()
+    } catch (err) {
+      // console.log(`Event handler failed to delete the users event history for userID: ${event.id}`);
+      throw new Error(`Event handler failed to delete the users event history for userID: ${event.id}`);
+    }
+  }
+
   private getChangeDescription(consents): string {
-    // TODO This needs to be refactored.
+
     type IConsentsToBeUpdated = {
       emailNotificationsEnabled: boolean
       smsNotificationsEnabled: boolean
     };
+
+    type consent = { id: string, enabled: boolean };
 
     let consentsToBeUpdated: IConsentsToBeUpdated = {
       emailNotificationsEnabled: undefined,
@@ -62,8 +79,6 @@ export class EventsService {
     };
 
     let changeDescription: string;
-
-    type consent = { id: string, enabled: boolean };
 
     function isConsentEnabled(consent): void {
       if (consent.id === "email_notifications") {
