@@ -26,15 +26,13 @@
 
 The entity-relationship diagram that represents the data model for this exercise is:
 
-![alt](https://github.com/davidmaceachern/consents-api/blob/04558feebdf899f827d3352e1d7e2b0994211340/diagrams/entity-relationship.png)
+![alt](https://github.com/davidmaceachern/consents-api/blob/99da50667de79e263fdb8120fc3ef7a779c8f6ef/diagrams/entity-relationship.png)
 
 ## System Architecture
 
 Overview of the technical components. 
 
 ![alt](https://github.com/davidmaceachern/consents-api/blob/9bdae952f22b5d2216c25af480ec36669390b3ab/diagrams/system-architecture.png)
-
-
 
 ## Running the API
 
