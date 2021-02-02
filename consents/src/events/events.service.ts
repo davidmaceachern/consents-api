@@ -51,15 +51,12 @@ export class EventsService {
 
   @OnEvent('ConsentUserDeletedEvent.created')
   async handleConsentUserDeletedEvent(event: ConsentUserDeletedEvent) {
-    console.log('CONSENT USER DELETED EVENT OCCURRED');
     try {
-      // await this.eventsRepository.delete({ userID: event.id});
       await this.eventsRepository.createQueryBuilder()
         .delete()
         .where("userID = :id", { id: event.id })
         .execute()
     } catch (err) {
-      // console.log(`Event handler failed to delete the users event history for userID: ${event.id}`);
       throw new Error(`Event handler failed to delete the users event history for userID: ${event.id}`);
     }
   }

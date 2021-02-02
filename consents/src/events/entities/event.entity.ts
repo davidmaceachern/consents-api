@@ -5,7 +5,7 @@ export class EventEntity {
 
   @PrimaryGeneratedColumn("uuid") 
   eventID: string;
-  
+
   @Column() 
   userID: string;
   

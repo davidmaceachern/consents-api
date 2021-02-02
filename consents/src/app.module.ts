@@ -59,5 +59,5 @@ if (process.env.ENVIRONMENT === "PRODUCTION") {
 })
 
 export class AppModule {
-  constructor(private connection: Connection) { }
+  constructor() { }
 }

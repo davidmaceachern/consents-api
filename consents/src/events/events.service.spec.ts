@@ -1,14 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnprocessableEntityException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventsService } from './events.service';
 import { EventEntity } from './entities/event.entity';
-import { CreateEventDto } from './dto/create-event.dto';
-import { Event } from './dto/event.interface';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
-// TODO Move to use DTO's as a factory for generating records or move to .json
 const date = new Date(2020, 10, 30)
 
 // const eventEntity: Event = {
@@ -17,6 +13,7 @@ const date = new Date(2020, 10, 30)
 //   changeDescription: "",
 //   timestamp: date
 // };
+
 const eventEntities: EventEntity[] = [{
   eventID: "00000000-0000-0000-0000-000000000000",
   userID: "11111111-1111-1111-1111-111111111111",
@@ -80,14 +77,17 @@ describe('EventsService', () => {
           }
         },
         {
-          provide: eventEmitter,
-          useValue: {}
+          provide: EventEmitter2,
+          useValue: {
+            emit: jest.fn()
+          }
         },
       ],
     }).compile();
 
     eventsService = moduleRef.get<EventsService>(EventsService);
     eventsRepository = moduleRef.get<Repository<EventEntity>>(getRepositoryToken(EventEntity));
+    eventEmitter = moduleRef.get<EventEmitter2>(EventEmitter2);
   });
 
   it('should be defined', () => {
@@ -112,12 +112,13 @@ describe('EventsService', () => {
         findOne.mockReturnValue(undefined);
       })
 
-      it.only('successfully create an event', async () => {
+      it('successfully create an event', async () => {
         const eventToBeCreated = createEvent1;
 
         await eventsService.create(eventToBeCreated);
 
         expect(eventsRepository.save).toBeCalledTimes(1);
+        expect(eventEmitter.emit).toBeCalledTimes(1);
       });
     });
   });

@@ -107,7 +107,6 @@ export class UsersService {
 
   @OnEvent('ConsentChangedEvent.created')
   async handleConsentChangedEvent(event: ConsentChangedEvent) {
-    console.log('CONSENT CHANGED EVENT OCCURRED');
     // find the user
     const user: UserEntity = await this.usersRepository.findOne(event.userID);
     type consent = { id: string, enabled: boolean };

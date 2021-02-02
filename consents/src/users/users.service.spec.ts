@@ -6,8 +6,7 @@ import { UserEntity } from './entities/user.entity';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './dto/user.interface';
-
-// TODO Move to use DTO's as a factory for generating records or move to .json
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 const user: User = {
   id: "00000000-0000-0000-0000-000000000000",
@@ -66,6 +65,7 @@ const userEntity = {
 describe('UsersService', () => {
   let usersService: UsersService;
   let usersRepository: Repository<UserEntity>;
+  let eventEmitter: EventEmitter2
   let findOne: jest.Mock;
 
   beforeEach(async () => {
@@ -83,12 +83,19 @@ describe('UsersService', () => {
             update: jest.fn().mockResolvedValue(true),
             delete: jest.fn().mockResolvedValue({ deleted: true })
           }
-        }
+        },
+        {
+          provide: EventEmitter2,
+          useValue: {
+            emit: jest.fn()
+          }
+        },
       ],
     }).compile();
 
     usersService = module.get<UsersService>(UsersService);
     usersRepository = module.get<Repository<UserEntity>>(getRepositoryToken(UserEntity));
+    eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
   it('should be defined', () => {
@@ -220,8 +227,9 @@ describe('UsersService', () => {
 
       it('successfully delete a user', async () => {
         const expected = { deleted: true };
-        const result = await usersService.delete("00000000-0000-0000-0000-000000000000")
+        const result = await usersService.delete("00000000-0000-0000-0000-000000000000");
         expect(result).toEqual(expected);
+        expect(eventEmitter.emit).toBeCalledTimes(1);
       });
 
       it('should return {deleted: false, message: err.message}', async () => {
