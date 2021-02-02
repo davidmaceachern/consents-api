@@ -127,7 +127,7 @@ Delete dangling resources `docker system prune` or all containers/images/builds 
 // TODO Edgecase - check failure mode for userRepository.findOne operation.
 // TODO Refactor - Move to use DTO's as a factory in tests for generating records or move to .json
 // TODO Refactor/Readability - getChangeDescription
-// TODO Refactor/Optimisation/Bug - Fi x foreign key on events.
+// TODO Refactor/Optimisation/Bug - Fix foreign key on events, the current database design does not enforce the user -> entity "onetomany" relationship.
 // TODO Refactor/Optimisation - Consider the level of granularity that transactions should be made with https://docs.nestjs.com/techniques/database#transactions
 // TODO Refactor/Optimisation/Bug - There is a probem where one emitted event is received by multiple event listeners. For commit "d8f2d7c8e3be6986f9ab0b3d714768057eda650a" when running the component tests and printing inside the consentchangedevent handler function, 5 logs are printed when only 3 events should have been created. For the userdeleted handler 2 logs are created for 1 event. This might require creating a single global event emitter module that can be used through the system instead of two intantiations.
 // TODO Chore - Switch on Typescript compiler strict typing and address the 25+ issues.
