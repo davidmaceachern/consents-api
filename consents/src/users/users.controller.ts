@@ -28,7 +28,7 @@ export class UsersController {
 
   @Get()
   @ApiOperation({
-    description: 'Find a user by email'
+    description: 'Find a user by id'
   })
   @ApiOkResponse({
     description: 'successfully found and fetched the requested consent user',

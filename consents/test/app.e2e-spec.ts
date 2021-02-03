@@ -51,11 +51,90 @@ describe('Consents API (e2e)', () => {
 
   describe('Should', () => {
     beforeEach(async (done) => {
-      await dropRecords(); // TODO find faster approach
+      await dropRecords(); 
       done();
     });
 
-    it('update the users consent status when a new consent event is created.', async () => {
+    it('allow the user to create multiple events that, when applied in the order of their creation, will generate their current consent status.', async () => {
+      const newUser: IUserRequestBody = { email: 'dumont@didomi.io' };
+
+      const server = request(app.getHttpServer())
+
+      // Create a new user
+      const newUserRequest = await server
+        .post('/users/')
+        .send(newUser)
+        .expect(201);
+      expect(newUserRequest.body).toHaveProperty("id");
+      expect(newUserRequest.body.email).toBe("dumont@didomi.io");
+      expect(newUserRequest.body).toHaveProperty("consents", []);
+
+      const userID = newUserRequest.body.id;
+      // Grab the id that was generated for use in the event creation
+      const newEvent = {
+        user: { id: userID },
+        consents: [
+          {
+            id: "email_notifications",
+            enabled: true
+          }
+        ]
+      };
+
+      // Create a new event for the created user
+      await server
+        .post('/events/')
+        .send(newEvent)
+        .expect(201);
+
+      // Grab the id that was generated for use in the event creation
+      const secondNewEvent = {
+        user: { id: newUserRequest.body.id },
+        consents: [
+          {
+            "id": "email_notifications",
+            "enabled": false
+          },
+          {
+            "id": "sms_notifications",
+            "enabled": true
+          }
+        ]
+      };
+
+      // Create a second new event for the created user
+      await server
+        .post('/events/')
+        .send(secondNewEvent)
+        .expect(201);
+
+      console.log(userID);
+      // TODO: Fix this test
+      // Check the user entity updated the consent status appropriately
+      await server
+        .get(`/users/${userID}`)
+        .expect(200);
+        // .expect({
+        // });
+
+      //  RESULTING USER GET REQUEST BODY IS
+      //       {
+      //   "id": "00000000-0000-0000-0000-000000000000",
+      //   "email": "valid@email.com",
+      //   "consents": [
+      //     {
+      //       "id": "email_notifications",
+      //       "enabled": false
+      //     },
+      //     {
+      //       "id": "sms_notifications",
+      //       "enabled": true
+      //     }
+      //   ]
+      // }
+    });
+
+    it('update the users consent status and modified time when a new consent event is created.', async () => {
       const newUser: IUserRequestBody = { email: 'dumont@didomi.io' };
 
       const server = request(app.getHttpServer())
