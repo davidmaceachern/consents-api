@@ -16,25 +16,24 @@ export class UsersController {
 
   @Get()
   @ApiOperation({
-    description: 'gets all available users'
+    description: 'gets all available consent users'
   })
   @ApiOkResponse({
-    description: 'successfully found and fetched all users',
+    description: 'successfully found and fetched all consent users',
     type: [UserDto]
   })
   async findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
 
-  @Get()
+  @Get(':id')
   @ApiOperation({
-    description: 'Find a user by id'
+    description: 'Find a consent user by id'
   })
   @ApiOkResponse({
     description: 'successfully found and fetched the requested consent user',
     type: [UserDto],
   })
-  @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
@@ -44,7 +43,7 @@ export class UsersController {
     description: 'create a new consent user',
   })
   @ApiOkResponse({
-    description: 'successfully created a new user',
+    description: 'successfully created a new consent user',
     type: [UserDto],
   })
   async create(@Body() createUserDto: CreateUserDto) {
