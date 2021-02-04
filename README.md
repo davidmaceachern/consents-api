@@ -18,6 +18,7 @@
 - [Nodejs](https://nodejs.org/en/), tested using version `12.20.1` but earlier versions might be supported by NestJS.
 - A text editor of your choice.
 - Clone/download the repository.
+- Whilst in the `./consents-api/consents` folder run `npm install` to set up the project dependencies.
 
 ## Goal
 - This project was developed to address the requirements defined in a Didomi challenge located [here](https://github.com/didomi/challenges/blob/96612679c628b1d3a8be742a193bc3ab78dd7aa2/backend/README.md)
