@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { getConnection } from 'typeorm';
 import * as request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { IUserRequestBody } from '../src/users/dto/user.interface';
+import { IUserRequestBody, User } from '../src/users/dto/user.interface';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../src/users/entities/user.entity';
 import { EventEntity } from '../src/events/entities/event.entity';
@@ -51,11 +51,84 @@ describe('Consents API (e2e)', () => {
 
   describe('Should', () => {
     beforeEach(async (done) => {
-      await dropRecords(); // TODO find faster approach
+      await dropRecords();
       done();
     });
 
-    it('update the users consent status when a new consent event is created.', async () => {
+    it('allow the user to create multiple events that, when applied in the order of their creation, will generate their current consent status.', async () => {
+      const newUser: IUserRequestBody = { email: 'dumont@didomi.io' };
+
+      const server = request(app.getHttpServer())
+
+      // Create a new user
+      const newUserRequest = await server
+        .post('/users/')
+        .send(newUser)
+        .expect(201);
+      expect(newUserRequest.body).toHaveProperty("id");
+      expect(newUserRequest.body.email).toBe("dumont@didomi.io");
+      expect(newUserRequest.body).toHaveProperty("consents", []);
+
+      // Grab the id that was generated for use in the event creation
+      const userID = newUserRequest.body.id;
+
+      const newEvent = {
+        user: { id: userID },
+        consents: [
+          {
+            id: "email_notifications",
+            enabled: true
+          }
+        ]
+      };
+
+      // Create a new event for the created user
+      await server
+        .post('/events/')
+        .send(newEvent)
+        .expect(201);
+
+      const secondNewEvent = {
+        user: { id: userID },
+        consents: [
+          {
+            "id": "email_notifications",
+            "enabled": false
+          },
+          {
+            "id": "sms_notifications",
+            "enabled": true
+          }
+        ]
+      };
+
+      // Create a second new event for the created user
+      await server
+        .post('/events/')
+        .send(secondNewEvent)
+        .expect(201);
+
+      // Check the user entity updated the consent status correctly
+      await server
+        .get(`/users/${userID}`)
+        .expect(200)
+        .expect({
+          "id": userID,
+          "email": "dumont@didomi.io",
+          "consents": [
+            {
+              "id": "email_notifications",
+              "enabled": false
+            },
+            {
+              "id": "sms_notifications",
+              "enabled": true
+            }
+          ]
+        });
+    });
+
+    it('update the users consent status and last modified time when a new consent event is created.', async () => {
       const newUser: IUserRequestBody = { email: 'dumont@didomi.io' };
 
       const server = request(app.getHttpServer())
@@ -78,6 +151,10 @@ describe('Consents API (e2e)', () => {
         ]
       };
 
+      // Check the last modified date is equal to created date
+      const userEntity = await userRepository.findOne(newUserRequest.body.id);
+      expect(userEntity.lastModifiedAt).toEqual(userEntity.createdAt);
+
       // Create a new event for the created user
       await server
         .post('/events/')
@@ -85,9 +162,13 @@ describe('Consents API (e2e)', () => {
         .expect(201);
 
       // Directly read from userEntity from the DB to check their status
-      const userEntity = await userRepository.findOne(newUserRequest.body.id);
-      expect(userEntity.previouslyGivenConsent).toBe(true);
-      expect(userEntity.smsNotificationsEnabled).toBe(true);
+      const updatedUserEntity = await userRepository.findOne(newUserRequest.body.id);
+      expect(updatedUserEntity.previouslyGivenConsent).toBe(true);
+      expect(updatedUserEntity.smsNotificationsEnabled).toBe(true);
+      expect(updatedUserEntity.emailNotificationsEnabled).toBe(false);
+
+      // Check the last modifed date is not equal to the created date
+      expect(updatedUserEntity.lastModifiedAt).not.toEqual(updatedUserEntity.createdAt);
     });
 
     it('delete all the users events when the user is deleted.', async () => {
@@ -134,9 +215,23 @@ describe('Consents API (e2e)', () => {
         .send(newEvent2)
         .expect(201);
 
-      // Directly read from eventRepository to verify events were deleted.
-      const eventEntities = await eventRepository.find(userID);
-      expect(eventEntities.length).toBe(0);
+      // Check the events exist for the user
+      const eventEntities: EventEntity[] = await eventRepository.find({ userID: userID });
+      expect(eventEntities.length).toBe(2);
+
+      // Check the user handled updating the users consent status
+      const userEntity: UserEntity[] = await userRepository.find({ userID: userID });
+      expect(userEntity[0].previouslyGivenConsent).toBe(true);
+
+      // Delete the user
+      await server
+        .delete(`/users/${userID}`)
+        .expect(200)
+        .expect({ deleted: true });
+
+      // Verify the events entity acts upon the user being deleted.
+      const eventEntities2: EventEntity[] = await eventRepository.find({ userID: userID });
+      expect(eventEntities2.length).toBe(0);
     });
 
     it('return 201 with no consents when a user is successfully created', async () => {
@@ -182,7 +277,7 @@ describe('Consents API (e2e)', () => {
       const newUser: IUserRequestBody = { email: 'dumont@didomi.io' };
       const newUser2: IUserRequestBody = { email: 'beauvoir@outlook.com' };
       const newUser3: IUserRequestBody = { email: 'arthus-bertrand@aol.net' };
-      
+
       const server = request(app.getHttpServer())
       await server
         .post('/users/')
@@ -200,18 +295,6 @@ describe('Consents API (e2e)', () => {
         .get('/users/')
         .expect(200);
       expect(fetchAllUsersRequest.body.length).toBe(3);
-    });
-
-    it('return 201 when a user is deleted', async () => {
-      const newUser: IUserRequestBody = { email: 'dumont@didomi.io' };
-      const server = request(app.getHttpServer());
-
-      const newUserRequest = await server
-        .post('/users/')
-        .send(newUser)
-        .expect(201);
-      expect(newUserRequest.body.email).toBe("dumont@didomi.io");
-      expect(newUserRequest.body.consents.length).toBe(0);
     });
   });
 });
