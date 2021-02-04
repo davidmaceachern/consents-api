@@ -104,10 +104,6 @@ You should be able to run the following queries using the Postgresql client; to 
 └── start-postgres-tmpfs.sh
 ```
 
-## Generating Docs
-
-Swagger documentation can be accessed after running `npm run start` and visiting `http://localhost:3000/api` in a browser.
-
 ## Cleaning Up
 
 Delete dangling resources `docker system prune` or all containers/images/builds `docker system prune -a`, **WARNING** this will delete any Docker resources on your machine. 
