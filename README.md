@@ -19,7 +19,7 @@
 - A text editor of your choice.
 - Clone/download the repository.
 
-## Goals
+## Goal
 - This project was developed to address the requirements defined in a Didomi challenge located [here](https://github.com/didomi/challenges/blob/96612679c628b1d3a8be742a193bc3ab78dd7aa2/backend/README.md)
 
 ## Data Model
