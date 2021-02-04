@@ -114,7 +114,7 @@ describe('Consents API (e2e)', () => {
         .expect(200)
         .expect({
           "id": userID,
-          "email": "dumont@didomi.com",
+          "email": "dumont@didomi.io",
           "consents": [
             {
               "id": "email_notifications",

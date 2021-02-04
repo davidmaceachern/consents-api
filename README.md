@@ -14,8 +14,8 @@
 
 ## Prerequisites
   
-- [Docker](https://www.docker.com/)
-- [Nodejs](https://nodejs.org/en/), or manage multiple versions of Node using [NVM](https://github.com/nvm-sh/nvm)
+- [Docker](https://www.docker.com/), for running Postgres database locally.
+- [Nodejs](https://nodejs.org/en/), tested using version `12.20.1` but earlier versions might be supported by NestJS.
 - A text editor of your choice.
 - Clone/download the repository.
 
@@ -112,26 +112,29 @@ Swagger documentation can be accessed after running `npm run start` and visiting
 
 Delete dangling resources `docker system prune` or all containers/images/builds `docker system prune -a`, **WARNING** this will delete any Docker resources on your machine. 
 
+## Edge Cases
+
+- [ ] If a user tries to use a consent id that does not match the supported id's the system does not validate their correctness.
+- [ ] If user updates their consent status directly would that emit an event we need to handle here?
+- [ ] If user is not a valid user, we would need to use an authentication layer to avoid this being a problem?
+- [ ] The findAll operation might be improved by letting the user know when there are no events
+- [ ] It might be easier to store the consent change types in a database table instead of in the application logic.
+- [ ] Verify that a sad path for the userRepository.findOne operation is not needed
+- [ ] There is currently no way to manage the database transaction lifecycle in the event that data needs to be manually rolled back https://docs.nestjs.com/techniques/database#transactions
+- [ ] Migrations will be required if the database schema changes after v1 is deployed to production.
+
 ## Future Work
 
-- Consider whether further decoupling would be beneficial, i.e. do we need to consider another Topic subscription service and task/queue outside of the container process.
-- Refactor some of the code for increased readability, add a data factory for generating entity record test data.
-- Add Logging, Telemetry, and Metrics using the standard that the organization has decided on.
-- Move the Data transformations into the respective `Dto`.
-- Run a memory profiling tool as described [here](https://www.toptal.com/nodejs/debugging-memory-leaks-node-js-applications), to identify opportunities for optimization.
-
-// TODO Edgecase - if user updates their consent status directly would that emit an event we need to handle here?
-// TODO Edgecase - if user is not a valid user, we would need to use an authentication layer to avoid this being a problem?
-// TODO Edgecase - findAll might want let the user know when there are no events
-// TODO Edgecase - might be simpler to store the descriptions in a table
-// TODO Edgecase - check failure mode for userRepository.findOne operation.
-// TODO Refactor - Move to use DTO's as a factory in tests for generating records or move to .json
-// TODO Refactor/Readability - getChangeDescription
-// TODO Refactor/Optimisation/Bug - Fix foreign key on events, the current database design does not enforce the user -> entity "onetomany" relationship.
-// TODO Refactor/Optimisation - Consider the level of granularity that transactions should be made with https://docs.nestjs.com/techniques/database#transactions
-// TODO Refactor/Optimisation/Bug - There is a probem where one emitted event is received by multiple event listeners. For commit "d8f2d7c8e3be6986f9ab0b3d714768057eda650a" when running the component tests and printing inside the consentchangedevent handler function, 5 logs are printed when only 3 events should have been created. For the userdeleted handler 2 logs are created for 1 event. This might require creating a single global event emitter module that can be used through the system instead of two intantiations.
-// TODO Chore - Switch on Typescript compiler strict typing and address the 25+ issues.
-// TODO Chore - getUsersConsents return type signaturecan replace ANY type with OR type
-// TODO Chore - Fix decorator @IsEmail() in Dto instead of calling class-validator directory in the user service.
-// TODO Enhancement - Add observability to help understand how the application is doing. 
-// TODO Production - Migrations will be required if the database changes after v1 is in production.
+- [ ] Consider whether further decoupling would be beneficial, i.e. do we need to consider another Topic subscription service and task/queue outside of the container process.
+- [ ] Refactor some of the code for increased readability, add a data factory for generating entity record test data.
+- [ ] Add Logging, Telemetry, and Metrics using the standard that the organization has decided on.
+- [ ] Move the Data transformations into the respective `Dto`.
+- [ ] Run a memory profiling tool as described [here](https://www.toptal.com/nodejs/debugging-memory-leaks-node-js-applications), to identify opportunities for optimization.
+- [ ] Refactor - Move to use DTO's as a factory in tests for generating records or move to .json
+- [ ] Refactor - getChangeDescription
+- [ ] Refactor/Optimisation/Bug - Fix foreign key on events, the current database design does not enforce the user -> entity "onetomany" relationship.
+- [ ] Refactor/Optimisation/Bug - There is a problem where one emitted event is received by multiple event listeners. For commit "d8f2d7c8e3be6986f9ab0b3d714768057eda650a" when running the component tests and printing inside the consentchangedevent handler function, 5 logs are printed when only 3 events should have been created. For the userdeleted handler 2 logs are created for 1 event. This might require creating a single global event emitter module that can be used through the system instead of two intantiations.
+- [ ] Chore - Switch on Typescript compiler strict typing and address the 25+ issues.
+- [ ] Chore - getUsersConsents return type signature can replace ANY type with OR type
+- [ ] Chore - Fix decorator @IsEmail() in Dto instead of calling class-validator directory in the user service.
+- [ ] E2E tests might require a sleep timer to be used with the `afterEach` hook as occasionally a test case fails.
